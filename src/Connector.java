@@ -12,13 +12,15 @@ class Connector {
     private final Receiver receiveThread;
     private final PeerConnection peerConnection;
     private final int ownId, otherId;
+    private int state;
 
     /**
      * Constructor for Connector. Each Connector Instance can connect to one other peer
+     *
      * @param peerConnection notify about timeout or success
-     * @param ownId the own id of this peer
-     * @param otherId the id of the peer we want to connect to
-     * @param timeout timeout for each try
+     * @param ownId          the own id of this peer
+     * @param otherId        the id of the peer we want to connect to
+     * @param timeout        timeout for each try
      * @throws SocketException if something goes wrong :)
      */
     Connector(PeerConnection peerConnection, int ownId, int otherId, int timeout) throws SocketException {
@@ -32,16 +34,18 @@ class Connector {
 
     /**
      * Send all necessary info to the rendezvous server
-     * @param rendezVousServer the server the first packet will be send to
+     *
      * @throws SocketException if something goes wrong :)
      */
     void start(InetSocketAddress rendezVousServer) throws SocketException {
+        state = 0;
         newSendData(Payload.ConnState.connectToServer, rendezVousServer);
     }
 
     /**
-     * New Data, whioh means a new state or new target addresses
-     * @param newState the current state of this peer @see Payload.Connstate
+     * New Data, whioh means a new connectingSate or new target addresses
+     *
+     * @param newState  the current connectingSate of this peer @see Payload.Connstate
      * @param addresses the new addresses
      * @throws SocketException if something goes wrong :)
      */
@@ -59,8 +63,7 @@ class Connector {
      * The sender sends given data to the given addresses.
      * If a timeout occurs the sender will be interrupted and the sender will send the data to the next available address.
      * If there are no mor available addresses the connect process has failed.
-     *
-     * */
+     */
     class Sender extends Thread {
         private InetSocketAddress[] targetAddresses;
         private final DatagramPacket packet;
@@ -91,7 +94,7 @@ class Connector {
             }
 
             if (!cancelled) {
-                peerConnection.onTimout(otherId);
+                peerConnection.onTimout(otherId, state);
                 Connector.this.cancel();
             }
         }
@@ -104,8 +107,9 @@ class Connector {
 
     /**
      * The Receiver receives UDP Packets on the socket.
-     * @see #newSendData(int newState, InetSocketAddress... addresses) will be called if new data is received
      *
+     * @see #newSendData(int newState, InetSocketAddress... addresses) will be called if new data is received
+     * <p>
      * if a timeout occurs, the sender will be interrupted
      */
     class Receiver extends Thread {
@@ -122,30 +126,33 @@ class Connector {
             byte[] buffer = new byte[Payload.length];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
-            int state = 0;
             while (!cancelled) {
                 try {
                     socket.receive(packet);
-                    //parse
+
                     byte[] data = packet.getData();
                     int newState = Payload.getState(data);
                     if (newState > state) {
-                        switch (newState) {
-                            case Payload.ConnState.receiveOtherPeersAddresses:
-                                System.out.println("Receiver: Received other peers addresses from server " + NetworkUtil.addressToString(Payload.getPeerAddresses(data)));
+                        int senderId = Payload.getSenderId(data);
+                        int receiverId = Payload.getReceiverId(data);
+
+                        if (senderId == ownId && receiverId == otherId) {
+                            //packet from server
+                            if (newState == Payload.ConnState.connectToServer) {
+                                System.out.println("Receiver: Registration confirmed");
+                                newSendData(Payload.ConnState.requestPeerAddresses, (InetSocketAddress) packet.getSocketAddress());
+                            } else if (newState == Payload.ConnState.requestPeerAddresses) {
+                                System.out.println("Receiver: Received other peers addresses from server");
                                 newSendData(Payload.ConnState.connectToPeer, Payload.getPeerAddresses(data));
-                                break;
+                            }
 
-                            case Payload.ConnState.connectToPeer:
-                                System.out.println("Receiver: Received packet from other peer: " + NetworkUtil.addressToString((InetSocketAddress) packet.getSocketAddress()));
-                                newSendData(Payload.ConnState.confirmingConnection, (InetSocketAddress) packet.getSocketAddress());
-                                break;
-
-                            case Payload.ConnState.confirmingConnection:
-                                System.out.println("Receiver: Connection confirmed by: " + NetworkUtil.addressToString((InetSocketAddress) packet.getSocketAddress()));
+                        } else if (senderId == otherId && receiverId == ownId) {
+                            //packet from other peer
+                            if (newState == Payload.ConnState.confirmingConnection) {
                                 peerConnection.success(otherId, socket, (InetSocketAddress) packet.getSocketAddress());
-                                newSendData(Payload.ConnState.confirmingConnection, (InetSocketAddress) packet.getSocketAddress());
-                                break;
+                            }
+                            newSendData(Payload.ConnState.confirmingConnection, (InetSocketAddress) packet.getSocketAddress());
+                            System.out.println("Receiver: Received packet from other peer: " + NetworkUtil.addressToString((InetSocketAddress) packet.getSocketAddress()));
                         }
                         state = newState;
                     }

@@ -75,7 +75,8 @@ public class PeerConnection {
         }
     }
 
-    void onTimout(int otherId) {
+    void onTimout(int otherId, int state) {
+        System.out.println("Timout while connecting to " + otherId + " state: " + state);
         runningConnectors.remove(otherId);
         listener.onTimout(otherId);
     }

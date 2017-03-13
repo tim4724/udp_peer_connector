@@ -64,6 +64,6 @@ class Payload {
      * Possible States during the attempt to connect
      */
     class ConnState {
-        static final int connectToServer = 1, receiveOtherPeersAddresses = 2, connectToPeer = 3, confirmingConnection = 4;
+        static final int connectToServer = 1, requestPeerAddresses = 2, connectToPeer = 3, confirmingConnection = 4;
     }
 }
