@@ -1,10 +1,10 @@
-import util.ByteStuff;
+package de.tim.udp_connector;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-import static util.ByteStuff.*;
+import static de.tim.udp_connector.ByteStuff.*;
 
 /**
  * Put data in a byte array and read data from a byte array

@@ -1,10 +1,10 @@
-import util.NetworkUtil;
+package de.tim.udp_connector;
 
 import java.io.IOException;
 import java.net.*;
 
 /**
- * Connector tries to connect to another peer.
+ * de.tim.udp_connector.Connector tries to connect to another peer.
  */
 class Connector {
     private final DatagramSocket socket;
@@ -15,7 +15,7 @@ class Connector {
     private int state;
 
     /**
-     * Constructor for Connector. Each Connector Instance can connect to one other peer
+     * Constructor for de.tim.udp_connector.Connector. Each de.tim.udp_connector.Connector Instance can connect to one other peer
      *
      * @param peerConnection notify about timeout or success
      * @param ownId          the own id of this peer
@@ -45,7 +45,7 @@ class Connector {
     /**
      * New Data, whioh means a new connectingSate or new target addresses
      *
-     * @param newState  the current connectingSate of this peer @see Payload.Connstate
+     * @param newState  the current connectingSate of this peer @see de.tim.udp_connector.Payload.Connstate
      * @param addresses the new addresses
      * @throws SocketException if something goes wrong :)
      */

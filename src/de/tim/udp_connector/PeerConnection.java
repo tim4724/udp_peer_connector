@@ -1,3 +1,5 @@
+package de.tim.udp_connector;
+
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;

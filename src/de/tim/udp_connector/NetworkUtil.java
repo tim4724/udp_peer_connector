@@ -1,12 +1,12 @@
-package util;
+package de.tim.udp_connector;
 
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-public class NetworkUtil {
-    public static InetAddress getLocalHostAddress() {
+class NetworkUtil {
+    static InetAddress getLocalHostAddress() {
         DatagramSocket socket = null;
         InetAddress localHostAddress = null;
 
@@ -35,7 +35,7 @@ public class NetworkUtil {
         return localHostAddress;
     }
 
-    public static String addressToString(InetSocketAddress... addresses) {
+    static String addressToString(InetSocketAddress... addresses) {
         String s = "";
         for(InetSocketAddress address : addresses) {
             s = s + address.getAddress().getHostAddress() + ":" + address.getPort() + " ";
