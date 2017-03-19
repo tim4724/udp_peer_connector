@@ -89,8 +89,10 @@ public class PeerConnection {
                 new java.util.TimerTask() {
                     @Override
                     public void run() {
-                        runningConnectors.remove(otherId);
-                        listener.onSuccess(otherId, socket, otherAddress);
+                        if (runningConnectors.containsKey(otherId)) {
+                            PeerConnection.this.cancel(otherId);
+                            listener.onSuccess(otherId, socket, otherAddress);
+                        }
                     }
                 }, 1000
         );
